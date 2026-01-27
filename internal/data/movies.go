@@ -1,11 +1,15 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/shaheerkj/greenlight/internal/validator"
 )
 
+type MovieModel struct {
+	DB *sql.DB
+}
 type Movie struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"-"`
@@ -14,6 +18,26 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime,omitempty,string"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int32     `json:"version,omitempty"` // version will be updated everytime we make changes to the movie information
+}
+
+// Add a placeholder method for inserting a new record in the movies table.
+func (m MovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+// Add a placeholder method for fetching a specific record from the movies table.
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+// Add a placeholder method for updating a specific record in the movies table.
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+// Add a placeholder method for deleting a specific record from the movies table.
+func (m MovieModel) Delete(id int64) error {
+	return nil
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
