@@ -15,46 +15,86 @@ A JSON API for managing movie information, built with Go.
 - Structured logging with `slog`
 - PostgreSQL database with connection pooling
 - Database migrations
+- **Docker support** with multi-stage builds (~20MB image)
+- **Docker Compose** for full-stack deployment
 
 ## Tech Stack
 
 - **Language:** Go 1.24+
 - **Router:** [httprouter](https://github.com/julienschmidt/httprouter)
-- **Database:** PostgreSQL (using [lib/pq](https://github.com/lib/pq))
+- **Database:** PostgreSQL 16 (using [lib/pq](https://github.com/lib/pq))
 - **Migrations:** [golang-migrate](https://github.com/golang-migrate/migrate)
 - **Environment:** [godotenv](https://github.com/joho/godotenv)
+- **Containerization:** Docker, Docker Compose
 
 ## Project Structure
 
 ```
 greenlight/
 ├── cmd/
-│   └── api/           # Application entrypoint and HTTP handlers
-│       ├── main.go        # Entry point, config, DB connection
-│       ├── routes.go      # Route definitions
-│       ├── handlers.go    # HTTP handlers
-│       ├── helpers.go     # Helper functions
-│       ├── errors.go      # Error response handlers
-│       └── middleware.go  # HTTP middleware
+│   └── api/               # Application entrypoint and HTTP handlers
+│       ├── main.go            # Entry point, config, DB connection
+│       ├── routes.go          # Route definitions
+│       ├── movies.go          # Movie handlers
+│       ├── helpers.go         # Helper functions
+│       ├── errors.go          # Error response handlers
+│       └── middleware.go      # HTTP middleware
 ├── internal/
-│   ├── data/          # Database models and business logic
-│   │   ├── movies.go      # Movie model and CRUD operations
-│   │   └── runtime.go     # Custom runtime type
-│   └── validator/     # Input validation utilities
-├── migrations/        # Database migration files
-├── bin/               # Compiled binaries
-└── remote/            # Remote server configuration
+│   ├── data/              # Database models and business logic
+│   │   ├── models.go          # Model registry
+│   │   ├── movies.go          # Movie model and CRUD operations
+│   │   └── runtime.go         # Custom runtime type
+│   └── validator/         # Input validation utilities
+├── migrations/            # Database migration files
+├── bin/                   # Compiled binaries
+├── Dockerfile             # Multi-stage Docker build
+├── docker-compose.yml     # Full-stack deployment
+├── .env.example           # Environment template
+└── remote/                # Remote server configuration
 ```
 
 ## Getting Started
 
-### Prerequisites
+### Option 1: Docker Compose (Recommended)
+
+The easiest way to run the entire stack:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/shaheerkj/greenlight.git
+   cd greenlight
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+3. Start the stack:
+   ```bash
+   docker-compose up
+   ```
+
+   This will:
+   - Start PostgreSQL
+   - Run database migrations automatically
+   - Start the API server on port 4000
+
+4. Access the API:
+   ```bash
+   curl http://localhost:4000/v1/healthcheck
+   ```
+
+### Option 2: Local Development
+
+#### Prerequisites
 
 - Go 1.24 or later
 - PostgreSQL
 - [golang-migrate](https://github.com/golang-migrate/migrate) CLI
 
-### Installation
+#### Installation
 
 1. Clone the repository:
    ```bash
@@ -77,11 +117,7 @@ greenlight/
 
 4. Run database migrations:
    ```bash
-   # Set your DSN
-   $GREENLIGHT_DB_DSN="postgres://greenlight:password@localhost:5432/greenlight?sslmode=disable"
-   
-   # Run migrations
-   migrate -path migrations -database $GREENLIGHT_DB_DSN up
+   migrate -path migrations -database "postgres://greenlight:password@localhost:5432/greenlight?sslmode=disable" up
    ```
 
 5. Run the application:
@@ -95,7 +131,57 @@ greenlight/
    ./bin/api
    ```
 
-### Command-line Flags
+## Docker
+
+### Build the Image
+
+```bash
+docker build -t greenlight .
+```
+
+### Run Standalone (with external PostgreSQL)
+
+```bash
+docker run -p 4000:4000 \
+  -e DB_USERNAME=greenlight \
+  -e DB_PASSWORD=your_password \
+  -e DB_NAME=greenlight \
+  -e DB_HOST=host.docker.internal \
+  greenlight
+```
+
+### Docker Compose Commands
+
+```bash
+# Start all services
+docker-compose up
+
+# Start in detached mode
+docker-compose up -d
+
+# View logs
+docker-compose logs -f api
+
+# Stop services
+docker-compose down
+
+# Stop and remove volumes (deletes database data)
+docker-compose down -v
+
+# Rebuild after code changes
+docker-compose up --build
+```
+
+## Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DB_USERNAME` | Database username | `greenlight` |
+| `DB_PASSWORD` | Database password | `your_password` |
+| `DB_NAME` | Database name | `greenlight` |
+| `DB_HOST` | Database host | `localhost` or `db` (in Docker) |
+
+## Command-line Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -164,6 +250,12 @@ curl http://localhost:4000/v1/healthcheck
 ```
 
 ## Database Migrations
+
+### Using Docker
+
+Migrations run automatically with `docker-compose up`.
+
+### Manual Migration Commands
 
 ```bash
 # Apply all pending migrations
