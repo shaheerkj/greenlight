@@ -60,9 +60,10 @@ func openDB(cfg config) (*sql.DB, error) {
 func main() {
 	_ = godotenv.Load()
 
-	dsn := fmt.Sprintf("postgres://%s:%s@localhost/%s?sslmode=disable",
+	dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable",
 		os.Getenv("DB_USERNAME"),
 		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
 		os.Getenv("DB_NAME"),
 	)
 

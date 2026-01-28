@@ -1,0 +1,9 @@
+.git/
+.env
+.env.*
+bin/
+*.exe
+README.md
+Makefile
+.vscode/
+.idea/
